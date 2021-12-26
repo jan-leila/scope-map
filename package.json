@@ -1,0 +1,17 @@
+{
+  "name": "scope-map",
+  "version": "1.0.0",
+  "description": "",
+  "main": "src/index.js",
+  "scripts": {
+    "build": "mkdir build -p && nearleyc grammer/layout.ne -o build/layout.js & nearleyc grammer/scope.ne -o build/scope.js",
+    "prepare": "npm run build",
+    "start": "npm run build && node tests/test.js"
+  },
+  "author": "Leyla Becker",
+  "license": "MIT",
+  "dependencies": {
+    "moo": "^0.5.1",
+    "nearley": "^2.20.1"
+  }
+}
