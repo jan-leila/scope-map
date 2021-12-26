@@ -1,7 +1,7 @@
 {
   "name": "scope-map",
   "version": "1.0.0",
-  "description": "",
+  "description": "language for defining a tree of scopes, creating scope strings to provide access without redundancy, and matching agains required scopes",
   "main": "src/index.js",
   "scripts": {
     "build": "mkdir build -p && nearleyc grammer/layout.ne -o build/layout.js & nearleyc grammer/scope.ne -o build/scope.js",
@@ -13,5 +13,14 @@
   "dependencies": {
     "moo": "^0.5.1",
     "nearley": "^2.20.1"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jan-leila/scope-map.git"
+  },
+  "keywords": [
+    "oauth2",
+    "scope",
+    "language"
+  ]
 }
