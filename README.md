@@ -38,25 +38,25 @@ let write_about = scopes.require`
 `
 
 // true
-write_about.test(user_profile);
+write_about(user_profile);
 // true
-write_about.test(access_profile);
+write_about(access_profile);
 
 let read_auth = scopes.require`
     auth:r
 `
 
 // true
-read_auth.test(user_profile);
+read_auth(user_profile);
 // false
-read_auth.test(access_profile);
+read_auth(access_profile);
 
 let manage_content = scopes.require`
     about:w
     post:rw
 `
 // true
-read_auth.test(user_profile);
+read_auth(user_profile);
 // false
-read_auth.test(access_profile);
+read_auth(access_profile);
 ```
