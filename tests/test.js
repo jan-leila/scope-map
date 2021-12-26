@@ -27,5 +27,5 @@ let require_auth = scopes.require`
     auth
 `
 
-console.log("about test: ", require_about.test(access_profile));
-console.log("auth test: ", require_auth.test(access_profile));
+console.log("about test: ", require_about(access_profile));
+console.log("auth test: ", require_auth(access_profile));
