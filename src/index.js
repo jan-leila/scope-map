@@ -24,123 +24,108 @@ function requirment(layout, literals){
     let keys = [];
 
     // flatten out the tree into a list of permissions
-    while (stack.length) {
+    while(stack.length){
         let next = stack.pop();
 
         // if the key doesnt exist in the layout then we can just ignore it
-        if (layout.map[next.scope] === undefined) {
+        if(layout.map[next.scope] === undefined){
             continue;
         }
 
         // dont add ignored modifiers
-        if (next.modifier !== 'x') {
+        if(next.modifier !== 'x'){
             // we only need the scope and modifier info in the flattened map
             keys.push({ scope: next.scope, modifier: next.modifier });
         }
 
         // if we have children then we need to add them to the queue
-        if (next.sub_scopes) {
+        if(next.sub_scopes){
             stack.push(...next.sub_scopes);
         }
     }
+
+    // TODO: simplify key list
 
     const map = {};
 
     keys.forEach((key) => {
         // find key on layout diagram
         let pointer = layout.map[key.scope];
-        while (pointer) {
-            if (map[pointer.scope]) {
-                if (map[pointer.scope] === key.modifier) {
-                    return;
-                }
-                map[pointer.scope] += key.modifier;
+        let init_value = map[key.scope];
+        while(pointer){
+            if(map[pointer.scope] !== init_value){
+                break;
             }
-            else {
-                map[pointer.scope] = key.modifier;
-            }
+            map[pointer.scope] = key.scope;
             pointer = pointer.parent;
         }
     });
 
-    return function(scopes){
-        return scopes.split(' ').map((arg) => {
+    let cache = {};
+
+    return function(args){
+
+        if(cache[args]){
+            return cache[args];
+        }
+
+        let scopes = args.split(' ').map((arg) => {
             let scope = arg.split(':');
             return {
                 scope: scope[0],
                 modifier: scope[1] || 'r',
             };
-        }).every(({ scope, modifier }) => {
-            if (!map[scope]) {
-                return true;
-            }
-            return modifier.includes(map[scope]);
         });
+
+        scopes = scopes.map(({ scope, modifier }) => {
+            return {
+                scope: map[scope],
+                modifier
+            }
+        }).filter(({ scope }) => {
+            return scope !== undefined;
+        });
+
+
+        let compiled_scopes = {};
+
+        scopes.forEach(({ scope, modifier }) => {
+            if(compiled_scopes[scope] === undefined){
+                compiled_scopes[scope] = modifier;
+            }
+            if(compiled_scopes[scope] === 'x'){
+                return;
+            }
+            if(modifier === 'x'){
+                compiled_scopes[scope] = 'x';
+                return;
+            }
+            if(compiled_scopes[scope] === 'r'){
+                if(modifier === 'w'){
+                    compiled_scopes[scope] = 'rw';
+                }
+            }
+            if(compiled_scopes[scope] === 'w'){
+                if(modifier === 'r'){
+                    compiled_scopes[scope] = 'rw';
+                }
+            }
+        });
+
+        let result = keys.every((key) => {
+            let scope = compiled_scopes[key.scope];
+            if(scope === undefined){
+                return false;
+            }
+            console.log(key, scope);
+            return key.modifier.includes(scope);
+        });
+
+        cache[args] = result;
+
+        return result;
     }
 }
-
-// class Requirment {
-
-//     constructor(layout, literals){
-//         let stack = scope_parser.compile(literals);
-//         let keys = [];
-
-//         // flatten out the tree into a list of permissions
-//         while(stack.length){
-//             let next = stack.pop();
-
-//             // if the key doesnt exist in the layout then we can just ignore it
-//             if(layout.map[next.scope] === undefined){
-//                 continue;
-//             }
-
-//             // dont add ignored modifiers
-//             if(next.modifier !== 'x'){
-//                 // we only need the scope and modifier info in the flattened map
-//                 keys.push({ scope: next.scope, modifier: next.modifier });
-//             }
-
-//             // if we have children then we need to add them to the queue
-//             if(next.sub_scopes){
-//                 stack.push(...next.sub_scopes);
-//             }
-//         }
-
-//         this.map = {};
-
-//         keys.forEach((key) => {
-//             // find key on layout diagram
-//             let pointer = layout.map[key.scope];
-//             while(pointer){
-//                 if(this.map[pointer.scope]){
-//                     if(this.map[pointer.scope] === key.modifier){
-//                         return;
-//                     }
-//                     this.map[pointer.scope] += key.modifier;
-//                 }
-//                 else {
-//                     this.map[pointer.scope] = key.modifier;
-//                 }
-//                 pointer = pointer.parent;
-//             }
-//         });
-//     }
-
-//     test(scopes){
-//         return scopes.split(' ').map((arg) => {
-//             let scope = arg.split(':');
-//             return {
-//                 scope: scope[0],
-//                 modifier: scope[1] || 'r',
-//             };
-//         }).every(({ scope, modifier }) => {
-//             if(!this.map[scope]){
-//                 return true;
-//             }
-//             return modifier.includes(this.map[scope]);
-//         });
-//     }
-// }
 
 class Scope {
     constructor(literals){
