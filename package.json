@@ -6,7 +6,8 @@
   "scripts": {
     "build": "mkdir build -p && nearleyc grammer/layout.ne -o build/layout.js & nearleyc grammer/scope.ne -o build/scope.js",
     "prepare": "npm run build",
-    "start": "npm run build && node tests/test.js"
+    "test": "npm run build && mocha",
+    "start": "node test/index.js"
   },
   "author": "Leyla Becker",
   "license": "MIT",
@@ -22,5 +23,8 @@
     "oauth2",
     "scope",
     "language"
-  ]
+  ],
+  "devDependencies": {
+    "mocha": "^9.1.3"
+  }
 }
