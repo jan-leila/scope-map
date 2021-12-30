@@ -117,7 +117,6 @@ function requirment(layout, literals){
             if(scope === undefined){
                 return false;
             }
-            console.log(key, scope);
             return key.modifier.includes(scope);
         });
 
