@@ -71,6 +71,9 @@ describe('Layout', () => {
         const allow_root = layout.allow`
             user
         `;
+        const allow_root_rw = layout.allow`
+            user:rw
+        `;
         const exclude_auth = layout.allow`
             user {
                 auth:x
@@ -86,6 +89,9 @@ describe('Layout', () => {
 
         it('require about perms from root', () => {
             assert.equal(require_about(allow_root), true);
+        });
+        it('require read about from root with rw', () => {
+            assert.equal(require_about(allow_root_rw), true);
         });
         it('require about perms without auth perms', () => {
             assert.equal(require_about(exclude_auth), true);
