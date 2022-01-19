@@ -1,6 +1,6 @@
 
-const { layout_parser, scope_parser } = require('./parser.js');
-const requirment = require('./requirement.js');
+const { layout_parser } = require('./parser.js');
+const requirement = require('./requirement.js');
 
 class Scope {
     constructor(literals){
@@ -23,58 +23,140 @@ class Scope {
                 stack.push(...next.sub_scopes);
             }
         }
+
+        this._simplify_cache = {};
     }
 
-    allow([ literals ]){
-        let stack = scope_parser.compile(literals);
-        let keys = [];
+    _normalize(args){
+        return args
+            .flat()
+            .map(arg => arg.split(/\s+/))
+            .flat()
+            .filter(literal => literal !== '')
+            .sort();
+    }
 
-        // flatten out the tree into a list of permissions
-        while(stack.length){
-            let next = stack.pop();
+    // get the parts of the requirements
+    deserialize(modifier){
+        if(modifier.includes('x')){
+            return {
+                excluded: true,
+                read: false,
+                write: false,
+            };
+        }
+        return {
+            excluded: false,
+            read: modifier.includes('r'),
+            write: modifier.includes('w'),
+        }
+    }
 
-            // if the key doesnt exist in the layout then we can just ignore it
-            if(this.map[next.scope] === undefined){
-                continue;
+    // Take in a list of literals and split into scope and modifier
+    _parse(literals){
+        return literals.map((literal) => {
+            let [ scope, modifier = 'r' ] = literal.split(':');
+            if(modifier === ''){
+                modifier = 'r';
             }
+            return { scope, modifier }
+        });
+    }
 
-            // we only need the scope and modifier info in the flattened map
-            keys.push({ scope: next.scope, modifier: next.modifier });
-            // if we have children then we need to add them to the queue
-            if(next.sub_scopes){
-                stack.push(...next.sub_scopes);
-            }
+    parse(literals){
+        return this._parse([ literals ]);
+    }
+
+    // Take in a list of scopes and remove redundants
+    _simplify(args){
+        // normalize inputs
+        let literals = this._normalize(args);
+
+        // check for a cached value
+        let key = literals.join(' ');
+        let cached = this._simplify_cache[key];
+        if(cached){
+            return cached;
         }
 
-        // filter out redundant permissions
-        keys = keys.filter((key) => {
-            // find key on layout diagram
-            let pointer = this.map[key.scope].parent;
-            // traverse through that keys ancestors till we find one that matches a defined scope
-            while(pointer){
-                let ancester = keys.find(({ scope }) => {
-                    return scope === pointer.scope;
-                });
-                // if we found a matching ancester then remove if the ancester has the same permitions as the target scope
-                if(ancester){
-                    return ancester.modifier !== key.modifier;
-                }
-                pointer = pointer.parent;
+        let scopes = this._parse(literals);
+
+        // turn the list into a hash table for quicker access and to de duplicate
+        let keys = {};
+        scopes.forEach(({ scope, modifier }) => {
+            // get the value modifer parts
+            let current = this.deserialize(modifier);
+            // check for an existing modifier
+            let existing = keys[scope];
+            if(!existing){
+                keys[scope] = current;
             }
-            return true;
+            else {
+                // merge modifiers together
+                keys[scope] = {
+                    excluded: current.excluded || existing.excluded,
+                    read: current.read || existing.read,
+                    write: current.write || existing.write,
+                };
+            }
         });
 
-        // convert to sendable format removing redundent information
-        return keys.map(({ scope, modifier }) => {
+        // turn hash table back into list
+        scopes = Object.keys(keys).map((key) => {
+            return {
+                scope: key,
+                ...keys[key],
+            }
+        });
+
+        // filter out redundant permissions
+        scopes = scopes.filter(({ scope, excluded, read, write }) => {
+            // find key on layout diagram
+            let pointer = this.map[scope].parent;
+            // traverse through that keys ancestors till we find one that is set
+            while (pointer) {
+                let ancester = keys[pointer.scope];
+                // if we found a matching ancester then remove if the ancester has greater permitions then us
+                if(ancester){
+                    return (
+                        (!ancester.read && read) ||
+                        (!ancester.write && write) || 
+                        (ancester.excluded !== excluded)
+                    );
+                }
+                // if we didnt find a match then check its parent for a match
+                pointer = pointer.parent;
+            }
+            // if no matches where found then keep it
+            return true;
+        })
+        // sort so downstreams can use memoization
+        .sort((a, b) => {
+            return (a.scope < b.scope) ? -1 : (a.scope > b.scope) ? 1 : 0;
+        });
+
+        // cache value
+        this._simplify_cache[key] = scopes;
+
+        return scopes;
+    }
+
+    allow(...args) {
+        let scopes = this._simplify(args);
+
+        let scope = scopes.map(({ scope, excluded, read, write }) => {
+            let modifier = excluded ? 'x' : (read ? 'r' : '') + (write ? 'w' : '');
             if(modifier === 'r'){
                 return scope;
             }
             return `${scope}:${modifier}`;
         }).join(" ");
+        return scope;
     }
 
-    require([ literals ]){
-        return requirment(this, literals);
+    require(...args) {
+        let scopes = this._simplify(args);
+        return requirement(this, scopes);
     }
 }
 
