@@ -6,7 +6,7 @@ language for defining a tree of scopes, creating scope strings to provide access
 ### usage
 
 ```js
-const scope = require('../src/index.js');
+const scope = require('scope-map');
 
 // defined the layout for what scopes inherit from others
 let scopes = scope`
