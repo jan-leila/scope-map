@@ -1,7 +1,6 @@
 
 const nearley = require("nearley");
 const layout = require("../build/layout.js");
-const scope = require("../build/scope.js");
 
 class Parser {
     constructor(grammar) {
@@ -17,6 +16,5 @@ class Parser {
 }
 
 const layout_parser = new Parser(layout);
-const scope_parser = new Parser(scope);
 
-module.exports = { layout_parser, scope_parser };
+module.exports = { layout_parser };
