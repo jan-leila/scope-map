@@ -26,35 +26,25 @@ let user_profile = scopes.allow`
 `;
 
 // create a scope that has access to read and write profile data but not authentication data
-let access_profile = scopes.allow`
-    profile:rw {
-        auth:x
-    }
-`;
+let access_profile = scopes.allow('profile:rw', 'auth:x');
 
 // craete a requirement
-let write_about = scopes.require`
-    about:w
-`
+let write_about = scopes.require('about:w');
 
 // true
 write_about(user_profile);
 // true
 write_about(access_profile);
 
-let read_auth = scopes.require`
-    auth:r
-`
+let read_auth = scopes.require('auth:r');
 
 // true
 read_auth(user_profile);
 // false
 read_auth(access_profile);
 
-let manage_content = scopes.require`
-    about:w
-    post:rw
-`
+let manage_content = scopes.require('about:w', 'post:rw');
+
 // true
 read_auth(user_profile);
 // false
