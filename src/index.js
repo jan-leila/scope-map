@@ -25,6 +25,8 @@ class Scope {
         }
 
         this._simplify_cache = {};
+
+        this.requirements = [];
     }
 
     _normalize(args){
@@ -154,9 +156,17 @@ class Scope {
         return scope;
     }
 
+    prime(scope){
+        this.requirements.forEach((req) => {
+            req(scope);
+        });
+    }
+
     require(...args) {
         let scopes = this._simplify(args);
-        return requirement(this, scopes);
+        let out = requirement(this, scopes);
+        this.requirements.push(out);
+        return out;
     }
 }
 
