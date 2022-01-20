@@ -1,7 +1,10 @@
 
 # scope-map
+![MIT license](https://img.shields.io/npm/l/scope-map) ![minified size 20kb](https://img.shields.io/bundlephobia/min/scope-map)
 
-language for defining a tree of scopes, creating scope strings to provide access without redundancy, and matching agains required scopes
+define trees of scopes, create scope strings to provide access without redundancy, and matching agains required scopes
+
+[![NPM](https://nodei.co/npm/scope-map.png)](https://npmjs.org/package/scope-map)
 
 ### usage
 
