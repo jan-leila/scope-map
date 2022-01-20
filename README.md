@@ -5,48 +5,68 @@ language for defining a tree of scopes, creating scope strings to provide access
 
 ### usage
 
+creating a scope layout
 ```js
 const scope = require('scope-map');
 
-// defined the layout for what scopes inherit from others
-let scopes = scope`
-    user {
-        profile {
-            auth
-            profile_picture
-            about
-        }
-        post
+let layout = scope`
+    root {
+        scope1
+        scope2
     }
 `;
+```
 
-// create a scope for general users
-let user_profile = scopes.allow`
-    user:rw
-`;
+creating permissions to target route(s)
+```js
+let allow_root = layout.allow('root');
+let allow_0 = layout.allow('scope1');
+let allow_1 = layout.allow('scope1 scope2');
+let allow_2 = layout.allow('scope1', 'scope2');
+let allow_3 = layout.allow`scope1 scope2`;
 
-// create a scope that has access to read and write profile data but not authentication data
-let access_profile = scopes.allow('profile:rw', 'auth:x');
-
-// craete a requirement
-let write_about = scopes.require('about:w');
-
+/* NOTE:
+ * scope map doesnt extrapolate all sub scopes to mean
+ * a common parent scope so that parent scopes can later
+ * be expanded without giving scopes to unauthorized clients
+ */ 
 // true
-write_about(user_profile);
+console.log(allow_root != allow_1);
+```
+
+scope modifiers
+```js
+let allow_read_0 = layout.allow('scope1');
+let allow_read_1 = layout.allow('scope1:r');
+let allow_write = layout.allow('scope1:w');
+let allow_read_write_0 = layout.allow('scope1:rw');
+let allow_read_write_1 = layout.allow('scope1:wr');
+let allow_exclude = layout.allow('scope1:x');
+```
+
+creating requiremnts
+```js
+let require_0 = layout.require('scope1');
+let require_1 = layout.require('scope1 scope2');
+let require_2 = layout.require('scope1', 'scope2');
+let require_3 = layout.require`scope1 scope2`;
+
+let require_read_0 = layout.require('scope1');
+let require_read_1 = layout.require('scope1:r');
+let require_write = layout.require('scope1:w');
+let require_read_write_0 = layout.require('scope1:rw');
+let require_read_write_1 = layout.require('scope1:wr');
+```
+
+using requiremnts on a scope
+```js
 // true
-write_about(access_profile);
+console.log(require_0(allow_0));
+```
 
-let read_auth = scopes.require('auth:r');
+requirements will remember scopes that are passed to them so that subsequent calls for the same scope run faster
 
-// true
-read_auth(user_profile);
-// false
-read_auth(access_profile);
-
-let manage_content = scopes.require('about:w', 'post:rw');
-
-// true
-read_auth(user_profile);
-// false
-read_auth(access_profile);
+you can also pre prime all requirments so that common scopes run faster. this effects all existing requirments and all future requirements
+```
+layout.prime(allow_0);
 ```
