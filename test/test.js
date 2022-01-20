@@ -2,6 +2,25 @@ const assert = require('assert');
 const scope = require('../src/index.js');
 
 describe('Layout', () => {
+
+    it('should fail on duplicate scope names', () => {
+        let success = true;
+        try {
+            scope`
+                user {
+                    profile {
+                        posts
+                    }
+                    posts
+                }
+            `
+        }
+        catch {
+            success = false;
+        }
+        assert.equal(false, success);
+    });
+
     let layout = scope`
         user {
             profile {
@@ -139,6 +158,140 @@ describe('Layout', () => {
 
         it('shouldn\'t allow with grandparent scope but parent excluded', () => {
             assert.equal(false, require_auth('user profile:x'));
+        });
+
+        const redundant_requirement = layout.require('user auth');
+        it('shouldn\'t allow with both element and parent required but child excluded', () => {
+            assert.equal(false, redundant_requirement('user auth:x'));
+        });
+
+        const require_root = layout.require('user');
+        it('should allow excluded child if only parent is required', () => {
+            assert.equal(true, require_root('user auth:x'));
+        });
+    });
+
+    describe('caching', () => {
+        it('allow calls should be faster after first run', () => {
+            const count = 1000;
+
+            let layout;
+            
+            let no_cache_time = 0;
+            let cache_time = 0;
+            
+            for(let i = 0; i < count; i++){
+                layout = scope`
+                    user {
+                        profile {
+                            auth
+                            profile_picture
+                            about
+                        }
+                        posts
+                    }
+                `;
+
+                let start = performance.now();
+                layout.allow('about auth posts');
+                no_cache_time += performance.now() - start;
+            }
+            for (let i = 0; i < count; i++) {
+                let start = performance.now();
+                layout.allow('about auth posts');
+                cache_time += performance.now() - start;
+            }
+
+            assert.equal(true, cache_time < no_cache_time);
+        });
+
+        it('require calls should be faster after first run', () => {
+            const count = 10000;
+            
+            const scope = layout.allow('auth');
+            let require_auth;
+
+            let no_cache_time = 0;
+            let cache_time = 0;            
+            for (let i = 0; i < count; i++) {
+                require_auth = layout.require('auth');
+                let start = performance.now();
+                require_auth(scope);
+                no_cache_time += performance.now() - start;
+            }
+            for (let i = 0; i < count; i++) {
+                let start = performance.now();
+                require_auth(scope);
+                cache_time += performance.now() - start;
+            }
+            assert.equal(true, cache_time < no_cache_time);
+        });
+
+        it('require calls should be faster after first run after they are primed', () => {
+            const count = 5000;
+
+            const layout = scope`
+                user {
+                    profile {
+                        auth
+                        profile_picture
+                        about
+                    }
+                    posts
+                }
+            `;
+            const auth_scope = layout.allow('auth');
+
+            function benchmark(){
+                let time = 0;
+                for (let i = 0; i < count; i++) {
+                    require_auth = layout.require('auth');
+                    let start = performance.now();
+                    require_auth(auth_scope);
+                    time += performance.now() - start;
+                }
+                return time;
+            }
+            let no_prime_time = benchmark();
+            layout.prime(auth_scope);
+            let prime_time = benchmark();
+            assert.equal(true, prime_time < no_prime_time);
+        });
+
+        it('pre existing requirments also get primed', () => {
+            const count = 10000;
+            const layout = scope`
+                user {
+                    profile {
+                        auth
+                        profile_picture
+                        about
+                    }
+                    posts
+                }
+            `;
+            const auth_scope = layout.allow('auth');
+
+            let pre = Array.apply(null, Array(count)).map(() => {
+                return layout.require('auth');
+            });
+            let pre_time = 0;
+            pre.forEach((req) => {
+                let start = performance.now();
+                req(auth_scope);
+                pre_time += performance.now() - start;
+            });
+
+            let post = Array.apply(null, Array(count)).map(() => {
+                return layout.require('auth');
+            });
+            let post_time = 0;
+            post.forEach((req) => {
+                let start = performance.now();
+                req(auth_scope);
+                post_time += performance.now() - start;
+            });
+            assert.equal(true, post_time < pre_time);
         });
     });
 });
