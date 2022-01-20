@@ -27,6 +27,7 @@ class Scope {
         this._simplify_cache = {};
 
         this.requirements = [];
+        this.primed_scopes = [];
     }
 
     _normalize(args){
@@ -66,7 +67,7 @@ class Scope {
     }
 
     parse(literals){
-        return this._parse([ literals ]);
+        return this._parse(literals.split(' '));
     }
 
     // Take in a list of scopes and remove redundants
@@ -160,12 +161,16 @@ class Scope {
         this.requirements.forEach((req) => {
             req(scope);
         });
+        this.primed_scopes.push(scope);
     }
 
     require(...args) {
-        let scopes = this._simplify(args);
+        let scopes = this._parse(this._normalize(args));
         let out = requirement(this, scopes);
         this.requirements.push(out);
+        this.primed_scopes.forEach((scope) => {
+            out(scope);
+        });
         return out;
     }
 }
