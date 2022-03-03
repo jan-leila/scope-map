@@ -188,5 +188,5 @@ class Scope {
 }
 
 module.exports = function scope(args){
-    return new Scope(Array.isArray(args)? args[0] : args);
+    return new Scope(typeof args[0] === 'string'? args[0] : args);
 }
