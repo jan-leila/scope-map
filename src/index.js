@@ -4,7 +4,14 @@ const requirement = require('./requirement.js');
 
 class Scope {
     constructor(literals){
-        const stack = layout_parser.compile(literals);
+        let stack;
+        if(typeof literals === 'string'){
+            stack = layout_parser.compile(literals);
+        }
+        else {
+            stack = literals;
+        }
+        this._export = JSON.parse(JSON.stringify(stack));
         this.map = {};
 
         while(stack.length){
@@ -172,6 +179,10 @@ class Scope {
             out(scope);
         });
         return out;
+    }
+
+    export(){
+        return this._export;
     }
 }
 

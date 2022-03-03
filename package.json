@@ -1,13 +1,12 @@
 {
   "name": "scope-map",
-  "version": "1.3.2",
+  "version": "1.4.2",
   "description": "define a tree of scopes, creating scope strings to provide access without redundancy, and matching agains required scopes",
   "main": "src/index.js",
   "scripts": {
     "build": "mkdir build -p && nearleyc grammer/layout.ne -o build/layout.js",
     "prepare": "npm run build",
-    "test": "npm run build && mocha",
-    "start": "node test/index.js"
+    "test": "npm run build && mocha"
   },
   "author": "Leyla Becker",
   "license": "MIT",
