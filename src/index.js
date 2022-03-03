@@ -12,7 +12,7 @@ class Scope {
 
             // add values to map avoiding duplicate keys
             if(this.map[next.scope]){
-                throw new Error(`duplicate key ${value}`);
+                throw new Error(`duplicate key ${next.scope}`);
             }
             this.map[next.scope] = next;
 
