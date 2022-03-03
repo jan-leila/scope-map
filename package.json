@@ -1,6 +1,6 @@
 {
   "name": "scope-map",
-  "version": "1.4.2",
+  "version": "1.4.3",
   "description": "define a tree of scopes, creating scope strings to provide access without redundancy, and matching agains required scopes",
   "main": "src/index.js",
   "scripts": {
