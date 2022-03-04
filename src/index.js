@@ -13,16 +13,16 @@ class Scope {
             stack = JSON.parse(JSON.stringify(literals));
             this._export = literals;
         }
-        this.map = {};
+        this._map = {};
 
         while(stack.length){
             let next = stack.pop();
 
             // add values to map avoiding duplicate keys
-            if(this.map[next.scope]){
+            if(this._map[next.scope]){
                 throw new Error(`duplicate key ${next.scope}`);
             }
-            this.map[next.scope] = next;
+            this._map[next.scope] = next;
 
             if(next.sub_scopes){
                 next.sub_scopes.forEach((child) => {
@@ -123,7 +123,7 @@ class Scope {
         // filter out redundant permissions
         scopes = scopes.filter(({ scope, excluded, read, write }) => {
             // find key on layout diagram
-            let pointer = this.map[scope].parent;
+            let pointer = this._map[scope].parent;
             // traverse through that keys ancestors till we find one that is set
             while (pointer) {
                 let ancester = keys[pointer.scope];
