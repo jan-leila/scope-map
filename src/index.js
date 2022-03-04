@@ -182,6 +182,10 @@ class Scope {
         return out;
     }
 
+    keys(){
+        return Object.keys(this._map);
+    }
+
     export(){
         return this._export;
     }
